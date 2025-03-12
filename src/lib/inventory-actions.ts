@@ -55,7 +55,7 @@ export async function updateInventoryItem(data: any) {
             }
         }
 
-        revalidatePath("/inventory/manage")
+        revalidatePath("/inventory/search")
         revalidatePath("/dashboard")
 
         return {
@@ -83,7 +83,7 @@ export async function deleteInventoryItem(id: string) {
             }
         }
 
-        revalidatePath("/inventory/manage")
+        revalidatePath("/inventory/search")
         revalidatePath("/dashboard")
 
         return {

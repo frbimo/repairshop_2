@@ -61,7 +61,7 @@ export type Part = {
 
 // Customer controller
 export async function saveCustomerDetails(data: Omit<Customer, "id" | "createdAt">) {
-    const response = await post<{ customerId: string }>("/customers", data)
+    const response = await post<{ customerId: string }>("/servicess", data)
 
     if (response.success && response.data) {
         return {
@@ -172,7 +172,7 @@ export async function getServiceDetails(id: string) {
 }
 
 export async function getCustomerAndVehicleDetails(customerId: string, vehicleId: string) {
-    const customerResponse = await get<Customer>(`/customers/${customerId}`)
+    const customerResponse = await get<Customer>(`/servicess/${customerId}`)
     const vehicleResponse = await get<Vehicle>(`/vehicles/${vehicleId}`)
 
     return {

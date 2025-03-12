@@ -36,7 +36,7 @@ export function MainSidebar() {
     const isInventoryActive =
         pathname === "/dashboard" ||
         pathname.startsWith("/dashboard/") ||
-        pathname === "/inventory/manage" ||
+        pathname === "/inventory/search" ||
         pathname === "/inventory/purchase/new"
 
 
@@ -71,27 +71,27 @@ export function MainSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
 
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/customer" || pathname.startsWith("/customer/")}>
-                                    <Link href="/customer">
+                            {/* <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/services" || pathname.startsWith("/services/")}>
+                                    <Link href="/services">
                                         <Car className="h-4 w-4 mr-2" />
                                         <span>Service Management</span>
                                     </Link>
                                 </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            </SidebarMenuItem> */}
 
-                            <SidebarMenuItem className="group/collapsible">
-                                <SidebarMenuButton isActive={isInventoryActive} onClick={() => toggleSubmenu("inventory")}>
+                            {/* <SidebarMenuItem className="group/collapsible"> */}
+                            {/* <SidebarMenuButton isActive={isInventoryActive} onClick={() => toggleSubmenu("inventory")}>
                                     <LayoutDashboard className="h-4 w-4 mr-2" />
                                     <span>Inventory</span>
                                     <ChevronDown
                                         className={`ml-auto h-4 w-4 transition-transform ${openSubmenu === "inventory" ? "rotate-180" : ""}`}
                                     />
-                                </SidebarMenuButton>
+                                </SidebarMenuButton> */}
 
-                                {openSubmenu === "inventory" && (
-                                    <SidebarMenuSub>
-                                        <SidebarMenuSubItem>
+                            {/* {openSubmenu === "inventory" && (
+                                    <SidebarMenuSub> */}
+                            {/* <SidebarMenuSubItem>
                                             <SidebarMenuSubButton
                                                 asChild
                                                 isActive={pathname === "/dashboard" || pathname.startsWith("/dashboard/")}
@@ -100,31 +100,61 @@ export function MainSidebar() {
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                         <SidebarMenuSubItem>
-                                            <SidebarMenuSubButton asChild isActive={pathname === "/inventory/manage"}>
-                                                <Link href="/inventory/manage">Management</Link>
+                                            <SidebarMenuSubButton asChild isActive={pathname === "/inventory/search"}>
+                                                <Link href="/inventory/search">Management</Link>
                                             </SidebarMenuSubButton>
-                                        </SidebarMenuSubItem>
-                                        {/* <SidebarMenuSubItem>
+                                        </SidebarMenuSubItem> */}
+                            {/* <SidebarMenuSubItem>
                                             <SidebarMenuSubButton asChild isActive={pathname === "/purchase/new"}>
                                                 <Link href="/purchase/new">New Purchase</Link>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem> */}
-                                    </SidebarMenuSub>
-                                )}
-                            </SidebarMenuItem>
+                            {/* </SidebarMenuSub>
+                                )} */}
+                            {/* </SidebarMenuItem> */}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
 
                 <SidebarGroup>
-                    <SidebarGroupLabel>Registrasi Customer</SidebarGroupLabel>
+                    <SidebarGroupLabel>Service</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname.startsWith("/customer/register/")}>
-                                    <Link href="/customer/register/customer">
+                                <SidebarMenuButton asChild isActive={pathname.startsWith("/services/register/")}>
+                                    <Link href="/services/register/customer">
                                         <Car className="h-4 w-4 mr-2" />
                                         <span>Registrasi Baru</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname.startsWith("/services/estimations/")}>
+                                    <Link href="/services/estimations">
+                                        <Car className="h-4 w-4 mr-2" />
+                                        <span>Estimasi</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname.startsWith("/services/workorders/")}>
+                                    <Link href="/services/workorders">
+                                        <Car className="h-4 w-4 mr-2" />
+                                        <span>Work Order</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname.startsWith("/services/invoices/")}>
+                                    <Link href="/services/invoices">
+                                        <Car className="h-4 w-4 mr-2" />
+                                        <span>Invoice</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -147,8 +177,8 @@ export function MainSidebar() {
                         </SidebarMenu>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname.startsWith("/inventory/manage")}>
-                                    <Link href="/inventory/manage">
+                                <SidebarMenuButton asChild isActive={pathname.startsWith("/inventory/search")}>
+                                    <Link href="/inventory/search">
                                         <UserCog className="h-4 w-4 mr-2" />
                                         <span>Pencarian Suku Cadang</span>
                                     </Link>

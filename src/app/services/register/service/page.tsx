@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { getAvailableParts, getCustomerAndVehicleDetails, saveServiceDetails } from "@/lib/customer-actions"
-import { Clock } from "@/components/clock"
 
 const serviceTypeSchema = z.object({
     name: z.string().min(1, "Service type is required"),
@@ -22,7 +21,7 @@ const serviceTypeSchema = z.object({
 })
 
 const formSchema = z.object({
-    description: z.string().min(5, "Description must be at least 5 characters"),
+    description: z.string().optional(),
     estimatedCompletionDate: z.string().min(1, "Estimated completion date is required"),
     serviceTypes: z.array(serviceTypeSchema).min(1, "At least one service type is required"),
     parts: z.array(
@@ -60,7 +59,7 @@ export default function ServiceRegistrationPage() {
 
         if (!customerId || !vehicleId) {
             // If missing IDs, redirect back to customer registration
-            router.push("/customer/register/customer")
+            router.push("/services/register/customer")
             return
         }
 
@@ -68,6 +67,7 @@ export default function ServiceRegistrationPage() {
             setIsLoading(true)
             try {
                 // Load customer and vehicle details
+                console.log("getCustomerAndVehicleDetails", customerId, vehicleId)
                 const details = await getCustomerAndVehicleDetails(customerId, vehicleId)
                 setCustomerDetails(details.customer)
                 setVehicleDetails(details.vehicle)
@@ -130,7 +130,7 @@ export default function ServiceRegistrationPage() {
                 sessionStorage.removeItem("registrationVehicleId")
 
                 // Redirect to customer dashboard
-                router.push("/customer")
+                router.push("/services/estimations")
             } else {
                 console.error("Failed to save service details:", result.error)
                 setIsSubmitting(false)
@@ -144,14 +144,14 @@ export default function ServiceRegistrationPage() {
     const handleBack = () => {
         // Keep the customer ID but clear the vehicle ID
         sessionStorage.removeItem("registrationVehicleId")
-        router.push("/customer/register/vehicle")
+        router.push("/services/register/vehicle")
     }
 
     if (isLoading) {
         return (
             <div className="container mx-auto py-10">
                 <div className="flex justify-end mb-4">
-                    <Clock />
+                    {/* <Clock /> */}
                 </div>
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -163,13 +163,13 @@ export default function ServiceRegistrationPage() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-end mb-4">
-                <Clock />
+                {/* <Clock /> */}
             </div>
 
             <Card className="max-w-3xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Service Registration</CardTitle>
-                    <CardDescription>Step 3 of 3: Enter service details</CardDescription>
+                    <CardTitle>Service Detail</CardTitle>
+                    <CardDescription>Langkah 3 dari 3: Masukan service detail</CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
@@ -183,11 +183,11 @@ export default function ServiceRegistrationPage() {
                                     <p className="text-sm">{customerDetails?.phone}</p>
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-medium text-muted-foreground">Vehicle</h3>
+                                    <h3 className="text-sm font-medium text-muted-foreground">Kendaraan</h3>
                                     <p className="text-lg font-semibold">
                                         {vehicleDetails?.make} {vehicleDetails?.model} ({vehicleDetails?.year})
                                     </p>
-                                    <p className="text-sm">License: {vehicleDetails?.licensePlate}</p>
+                                    <p className="text-sm">Plat Nomor: {vehicleDetails?.licensePlate}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -199,9 +199,9 @@ export default function ServiceRegistrationPage() {
                                 {/* Service Types Section */}
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <FormLabel>Service Types</FormLabel>
+                                        <FormLabel>Rincian Servis</FormLabel>
                                         <Button type="button" variant="outline" size="sm" onClick={addServiceType}>
-                                            <Plus className="h-4 w-4 mr-1" /> Add Service Type
+                                            <Plus className="h-4 w-4 mr-1" /> Tambah tipe servis
                                         </Button>
                                     </div>
                                     <FormMessage>{form.formState.errors.serviceTypes?.message}</FormMessage>
@@ -214,11 +214,11 @@ export default function ServiceRegistrationPage() {
                                                     name={`serviceTypes.${index}.name`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>Service Type</FormLabel>
+                                                            <FormLabel>Tipe Service</FormLabel>
                                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                                 <FormControl>
                                                                     <SelectTrigger>
-                                                                        <SelectValue placeholder="Select service type" />
+                                                                        <SelectValue placeholder="Pilih tipe service" />
                                                                     </SelectTrigger>
                                                                 </FormControl>
                                                                 <SelectContent>
@@ -243,9 +243,9 @@ export default function ServiceRegistrationPage() {
                                                     name={`serviceTypes.${index}.description`}
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>Service Description (Optional)</FormLabel>
+                                                            <FormLabel>Penjelasan service (Optional)</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="Brief description of this service" {...field} />
+                                                                <Input placeholder="" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -271,10 +271,10 @@ export default function ServiceRegistrationPage() {
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Additional Notes</FormLabel>
+                                            <FormLabel>Catatan Tambahan</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Additional information about the service needed"
+                                                    placeholder=""
                                                     className="resize-none min-h-[100px]"
                                                     {...field}
                                                 />
@@ -289,7 +289,7 @@ export default function ServiceRegistrationPage() {
                                     name="estimatedCompletionDate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Estimated Completion Date</FormLabel>
+                                            <FormLabel>Estimasi Waktu Selesai</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
                                             </FormControl>
@@ -300,9 +300,9 @@ export default function ServiceRegistrationPage() {
 
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <FormLabel>Required Parts</FormLabel>
+                                        <FormLabel>Part yang dibutuhkan</FormLabel>
                                         <Button type="button" variant="outline" size="sm" onClick={addPart}>
-                                            <Plus className="h-4 w-4 mr-1" /> Add Part
+                                            <Plus className="h-4 w-4 mr-1" /> Tambah Part
                                         </Button>
                                     </div>
 
@@ -368,7 +368,7 @@ export default function ServiceRegistrationPage() {
                                         </Table>
                                     ) : (
                                         <div className="text-center py-4 border rounded-md text-muted-foreground">
-                                            No parts added. Click "Add Part" to select parts for this service.
+                                            Tidak ada part. Klik "Tambah Part" untuk memilih part untuk servis ini.
                                         </div>
                                     )}
                                 </div>
@@ -376,10 +376,10 @@ export default function ServiceRegistrationPage() {
 
                             <CardFooter className="flex justify-between mt-6">
                                 <Button type="button" variant="outline" onClick={handleBack}>
-                                    Back
+                                    Kembali
                                 </Button>
                                 <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? "Registering..." : "Complete Registration"}
+                                    {isSubmitting ? "Registering..." : "Registrasi Selesai"}
                                 </Button>
                             </CardFooter>
                         </form>

@@ -4,7 +4,7 @@
 export * from "./auth-controller"
 
 // Customer controller
-export * from "./customer-controller"
+export * from "./services-controller"
 
 // Inventory controller
 export * from "./inventory-controller"

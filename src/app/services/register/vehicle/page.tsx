@@ -15,13 +15,13 @@ import { saveVehicleDetails } from "@/lib/customer-actions"
 import { Clock } from "@/components/clock"
 
 const formSchema = z.object({
-    make: z.string().min(1, "Vehicle make is required"),
-    model: z.string().min(1, "Vehicle model is required"),
-    year: z.coerce.number().min(1900, "Year must be after 1900").max(2100, "Year must be before 2100"),
-    licensePlate: z.string().min(1, "License plate is required"),
-    color: z.string().min(1, "Color is required"),
-    vin: z.string().optional(),
-    mileage: z.coerce.number().min(0, "Mileage must be positive"),
+    make: z.string().min(1, "Masukkan Merk mobil"),
+    model: z.string().min(1, "Masukkan model kendaraan"),
+    year: z.coerce.number().min(1900, "Tahun setelah 1900").max(2100, "Tahun sebelum 2100"),
+    licensePlate: z.string().min(1, "B12345TWC"),
+    color: z.string().min(1, "Masukkan warna mobil"),
+    vin: z.string().min(5, "V12345"),
+    mileage: z.coerce.number().min(0, "Masukkan Odometer jarak tempuh"),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -51,7 +51,7 @@ export default function VehicleRegistrationPage() {
         const storedCustomerId = sessionStorage.getItem("registrationCustomerId")
         if (!storedCustomerId) {
             // If no customer ID, redirect back to customer registration
-            router.push("/customer/register/customer")
+            router.push("/services/register/customer")
             return
         }
 
@@ -86,9 +86,11 @@ export default function VehicleRegistrationPage() {
             const result = await saveVehicleDetails(customerId, values)
 
             if (result.success) {
-                // Store vehicle ID for the next step
-                sessionStorage.setItem("registrationVehicleId", result.vehicleId)
-                router.push("/customer/register/service")
+                if (result.vehicleId) {
+                    // Store vehicle ID for the next step
+                    sessionStorage.setItem("registrationVehicleId", result.vehicleId)
+                    router.push("/services/register/service")
+                }
             } else {
                 console.error("Failed to save vehicle details:", result.error)
                 setIsSubmitting(false)
@@ -102,19 +104,19 @@ export default function VehicleRegistrationPage() {
     const handleBack = () => {
         // Clear session storage and go back to first step
         sessionStorage.removeItem("registrationCustomerId")
-        router.push("/customer/register/customer")
+        router.push("/services/register/customer")
     }
 
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-end mb-4">
-                <Clock />
+                {/* <Clock /> */}
             </div>
 
             <Card className="max-w-2xl mx-auto">
                 <CardHeader>
-                    <CardTitle>Vehicle Registration</CardTitle>
-                    <CardDescription>Step 2 of 3: Enter vehicle details</CardDescription>
+                    <CardTitle>Registrasi Kendaraan</CardTitle>
+                    <CardDescription>Langkah 2 dari 3: Masukkan detail kendaraan</CardDescription>
                 </CardHeader>
 
                 <Form {...form}>
@@ -126,7 +128,7 @@ export default function VehicleRegistrationPage() {
                                     name="make"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Make</FormLabel>
+                                            <FormLabel>Merk*</FormLabel>
                                             <FormControl>
                                                 <Combobox
                                                     options={carBrands}
@@ -157,7 +159,7 @@ export default function VehicleRegistrationPage() {
 
                                         return (
                                             <FormItem>
-                                                <FormLabel>Model</FormLabel>
+                                                <FormLabel>Model*</FormLabel>
                                                 <FormControl>
                                                     <Combobox
                                                         options={modelOptions}
@@ -182,7 +184,7 @@ export default function VehicleRegistrationPage() {
                                     name="year"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Year</FormLabel>
+                                            <FormLabel>Tahun*</FormLabel>
                                             <FormControl>
                                                 <Input type="number" {...field} />
                                             </FormControl>
@@ -196,7 +198,7 @@ export default function VehicleRegistrationPage() {
                                     name="color"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Color</FormLabel>
+                                            <FormLabel>Warna*</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Black" {...field} />
                                             </FormControl>
@@ -210,7 +212,7 @@ export default function VehicleRegistrationPage() {
                                     name="licensePlate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>License Plate</FormLabel>
+                                            <FormLabel>Plat Nomor*</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="ABC123" {...field} />
                                             </FormControl>
@@ -226,7 +228,7 @@ export default function VehicleRegistrationPage() {
                                     name="vin"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>VIN (Optional)</FormLabel>
+                                            <FormLabel>No. Rangka</FormLabel>
                                             <FormControl>
                                                 <Input placeholder="Vehicle Identification Number" {...field} />
                                             </FormControl>
@@ -240,7 +242,7 @@ export default function VehicleRegistrationPage() {
                                     name="mileage"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Mileage</FormLabel>
+                                            <FormLabel>Odometer</FormLabel>
                                             <FormControl>
                                                 <Input type="number" placeholder="0" {...field} />
                                             </FormControl>
@@ -253,10 +255,10 @@ export default function VehicleRegistrationPage() {
 
                         <CardFooter className="flex justify-between">
                             <Button type="button" variant="outline" onClick={handleBack}>
-                                Back
+                                Batal
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? "Saving..." : "Next: Service Details"}
+                                {isSubmitting ? "Saving..." : "Lanjut: Detail Service "}
                             </Button>
                         </CardFooter>
                     </form>

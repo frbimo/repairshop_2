@@ -2,16 +2,16 @@
 
 import { useEffect, useState, createContext, useContext, type ReactNode } from "react"
 import { useRouter, usePathname } from "next/navigation"
-// import { auth, type User } from "@/lib/auth-controller"
-import { auth, type User } from "@/lib/auth"
+import { auth, type User, type rolePermissions } from "@/lib/auth"
 import { Loader2 } from "lucide-react"
 
 // Create context
 type AuthContextType = {
     user: User | null
     isAdmin: boolean
+    hasPermission: (permission: keyof typeof rolePermissions.admin) => boolean
     isLoading: boolean
-    login: (email: string, password: string) => Promise<User | null>
+    login: (email: string, password: string) => User | null
     logout: () => void
 }
 
@@ -26,18 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Initialize auth from localStorage
     useEffect(() => {
+        auth.initFromStorage()
         const currentUser = auth.getCurrentUser()
-        setUser(
-            currentUser
-                ? {
-                    id: currentUser.id,
-                    name: currentUser.name,
-                    email: currentUser.email,
-                    role: currentUser.role,
-                    createdAt: new Date(),
-                }
-                : null,
-        )
+        setUser(currentUser)
         setIsLoading(false)
 
         // Redirect to login if not authenticated and not already on login page
@@ -46,20 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [router, pathname])
 
-    // // Login function if using db
-    // const login = async (email: string, password: string) => {
-    //     const user = await auth.login(email, password)
-    //     setUser(user)
-    //     return user
-    // }
-
-    // DEBUG MODE: Login function 
-    const login = (email: string) => {
+    // Login function
+    const login = (email: string, password: string) => {
         const user = auth.login(email)
         setUser(user)
         return user
     }
-
 
     // Logout function
     const logout = () => {
@@ -68,12 +51,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/login")
     }
 
-    // Check if current path requires admin role
+    // Check if current path requires specific permissions
     useEffect(() => {
         if (!isLoading && user) {
             // Check if trying to access admin-only pages
-            if (pathname === "/admin/roles" && user.role !== "admin") {
-                router.push("/customer")
+            if (pathname === "/admin/roles" && !auth.hasPermission("canManageRoles")) {
+                router.push("/")
+            }
+
+            // Check if trying to access inventory management
+            if (
+                (pathname === "/inventory/search" || pathname === "/inventory//purchase/new") &&
+                !auth.hasPermission("canManageInventory")
+            ) {
+                router.push("/")
+            }
+
+            // Check if trying to access analytics
+            if (pathname === "/analytics" && !auth.hasPermission("canViewAnalytics")) {
+                router.push("/")
             }
         }
     }, [pathname, user, isLoading, router])
@@ -82,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const value = {
         user,
         isAdmin: user?.role === "admin",
+        hasPermission: (permission: keyof typeof rolePermissions.admin) => auth.hasPermission(permission),
         isLoading,
         login,
         logout,

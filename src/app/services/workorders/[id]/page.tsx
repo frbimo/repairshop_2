@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -64,7 +64,8 @@ const editFormSchema = z.object({
 
 type EditFormValues = z.infer<typeof editFormSchema>
 
-export default function ServiceDetailPage({ params }: { params: { id: string } }) {
+export default function ServiceDetailPage() {
+    const params = useParams<{ id: string }>()
     const router = useRouter()
     const { isAdmin } = useAuth()
     const [isLoading, setIsLoading] = useState(true)
@@ -122,7 +123,7 @@ export default function ServiceDetailPage({ params }: { params: { id: string } }
     }, [params.id, form])
 
     const handleBack = () => {
-        router.push("/customer")
+        router.push("/services/estimations")
     }
 
     const getStatusBadge = (status: string) => {

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
-import { generateRandomId } from "@/lib/qr-utils"
+import type { z } from "zod"
 
 // Type definitions
 export type Customer = {
@@ -11,12 +11,12 @@ export type Customer = {
     email: string
     phone: string
     address: string
-    createdAt: Date
+    vehicles: Vehicle[]
 }
 
 export type Vehicle = {
     id: string
-    customerId: string
+    customerId?: string
     make: string
     model: string
     year: number
@@ -24,12 +24,19 @@ export type Vehicle = {
     color: string
     vin?: string
     mileage: number
-    createdAt: Date
 }
 
 export type ServiceType = {
     name: string
     description?: string
+}
+
+export type Part = {
+    id: string
+    name: string
+    price: number
+    stock: number
+    quantity?: number
 }
 
 export type Service = {
@@ -40,11 +47,12 @@ export type Service = {
     estimatedCompletionDate: Date
     status: "pending" | "in_progress" | "completed"
     serviceTypes: ServiceType[]
-    parts: ServicePart[]
-    createdAt: Date
+    parts: Part[]
+    isWorkOrder: boolean
     estimationId?: string
     workOrderId?: string
-    isWorkOrder?: boolean
+    createdAt: Date
+    updatedAt: Date
 }
 
 export type ServicePart = {
@@ -54,23 +62,58 @@ export type ServicePart = {
     quantity: number
 }
 
-export type Part = {
-    id: string
-    name: string
-    price: number
-    stock: number
+// Server actions
+export async function getCustomers() {
+    try {
+        return await db.customer.findMany()
+    } catch (error) {
+        console.error("Failed to get customers:", error)
+        return []
+    }
 }
 
-// Server actions
-export async function saveCustomerDetails(data: any) {
+export async function getCustomerById(id: string) {
+    try {
+        console.log("getCustomerById", id)
+        return await db.customer.findById(id)
+    } catch (error) {
+        console.error(`Failed to get customer with ID ${id}:`, error)
+        return null
+    }
+}
+
+export async function updateCustomerDetails(id: string, data: z.infer<any>) {
+    try {
+        const updatedCustomer = await db.customer.update(id, data)
+
+        if (!updatedCustomer) {
+            return {
+                success: false,
+                error: "Customer not found",
+            }
+        }
+
+        revalidatePath("/services")
+        return {
+            success: true,
+            customerId: updatedCustomer.id,
+        }
+    } catch (error) {
+        console.error("Failed to update customer details:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to update customer details",
+        }
+    }
+}
+
+export async function saveCustomerDetails(data: z.infer<any>) {
     try {
         const customer = await db.customer.create({
-            data: {
-                ...data,
-                createdAt: new Date(),
-            },
+            data,
         })
 
+        revalidatePath("/services")
         return {
             success: true,
             customerId: customer.id,
@@ -84,16 +127,16 @@ export async function saveCustomerDetails(data: any) {
     }
 }
 
-export async function saveVehicleDetails(customerId: string, data: any) {
+export async function saveVehicleDetails(customerId: string, data: z.infer<any>) {
     try {
         const vehicle = await db.vehicle.create({
             data: {
                 ...data,
                 customerId,
-                createdAt: new Date(),
             },
         })
 
+        revalidatePath("/services")
         return {
             success: true,
             vehicleId: vehicle.id,
@@ -107,10 +150,10 @@ export async function saveVehicleDetails(customerId: string, data: any) {
     }
 }
 
-export async function saveServiceDetails(customerId: string, vehicleId: string, data: any) {
+export async function saveServiceDetails(customerId: string, vehicleId: string, data: z.infer<any>) {
     try {
         // Generate an estimation ID
-        const estimationId = generateRandomId("EST")
+        const estimationId = `EST-${Date.now().toString().slice(-5)}`
 
         const service = await db.service.create({
             data: {
@@ -118,31 +161,29 @@ export async function saveServiceDetails(customerId: string, vehicleId: string, 
                 vehicleId,
                 description: data.description,
                 serviceTypes: data.serviceTypes,
+                parts: data.parts.map((part: any) => {
+                    const partData = db.part.findById(part.partId)
+                    return {
+                        id: part.partId,
+                        name: partData ? partData.name : "Unknown Part",
+                        price: partData ? partData.price : 0,
+                        quantity: part.quantity,
+                    }
+                }),
                 estimatedCompletionDate: new Date(data.estimatedCompletionDate),
                 status: "pending",
-                createdAt: new Date(),
-                estimationId: estimationId,
                 isWorkOrder: false,
+                estimationId: estimationId,
             },
         })
 
-        // Add parts to the service
-        if (data.parts && data.parts.length > 0) {
-            for (const part of data.parts) {
-                await db.servicePart.create({
-                    data: {
-                        serviceId: service.id,
-                        partId: part.partId,
-                        quantity: part.quantity,
-                    },
-                })
-
-                // Update inventory (reduce stock)
-                await db.part.updateStock(part.partId, -part.quantity)
-            }
+        // Update inventory (reduce stock)
+        for (const part of data.parts) {
+            await db.part.updateStock(part.partId, -part.quantity)
         }
 
-        revalidatePath("/customer")
+        revalidatePath("/services")
+        revalidatePath("/services/estimations")
         return { success: true }
     } catch (error) {
         console.error("Failed to save service details:", error)
@@ -153,7 +194,7 @@ export async function saveServiceDetails(customerId: string, vehicleId: string, 
     }
 }
 
-export async function updateServiceDetails(serviceId: string, data: any) {
+export async function updateServiceDetails(serviceId: string, data: z.infer<any>) {
     try {
         // Get the current service to compare parts
         const currentService = await db.service.findById(serviceId, {
@@ -186,27 +227,34 @@ export async function updateServiceDetails(serviceId: string, data: any) {
             await db.part.updateStock(part.id, part.quantity)
         }
 
-        // 2. Remove all current parts
-        await db.servicePart.deleteByServiceId(serviceId)
-
-        // 3. Add new parts
-        if (data.parts && data.parts.length > 0) {
-            for (const part of data.parts) {
-                await db.servicePart.create({
-                    data: {
-                        serviceId: serviceId,
-                        partId: part.partId,
-                        quantity: part.quantity,
-                    },
-                })
-
-                // Update inventory (reduce stock)
-                await db.part.updateStock(part.partId, -part.quantity)
+        // 2. Update with new parts
+        const updatedParts = data.parts.map((part: any) => {
+            const partData = db.part.findById(part.partId)
+            return {
+                id: part.partId,
+                name: partData ? partData.name : "Unknown Part",
+                price: partData ? partData.price : 0,
+                quantity: part.quantity,
             }
+        })
+
+        // 3. Update the service with new parts
+        await db.service.update({
+            id: serviceId,
+            data: {
+                parts: updatedParts,
+            },
+        })
+
+        // 4. Update inventory (reduce stock for new parts)
+        for (const part of data.parts) {
+            await db.part.updateStock(part.partId, -part.quantity)
         }
 
-        revalidatePath("/customer")
-        revalidatePath(`/customer/${serviceId}`)
+        revalidatePath("/services")
+        revalidatePath(`/services/${serviceId}`)
+        revalidatePath("/services/estimations")
+        revalidatePath("/services/workorders")
 
         return { success: true }
     } catch (error) {
@@ -218,116 +266,14 @@ export async function updateServiceDetails(serviceId: string, data: any) {
     }
 }
 
-export async function getServicesInProgress() {
+export async function getServiceDetails(serviceId: string) {
     try {
-        const services = await db.service.findMany({
+        return await db.service.findById(serviceId, {
             include: {
                 customer: true,
                 vehicle: true,
             },
         })
-
-        return services
-    } catch (error) {
-        console.error("Failed to get services in progress:", error)
-        return []
-    }
-}
-
-export async function getEstimations() {
-    try {
-        const services = await db.service.findMany({
-            where: {
-                isWorkOrder: false,
-            },
-            include: {
-                customer: true,
-                vehicle: true,
-            },
-        })
-
-        return services
-    } catch (error) {
-        console.error("Failed to get estimations:", error)
-        return []
-    }
-}
-
-export async function getWorkOrders() {
-    try {
-        const services = await db.service.findMany({
-            where: {
-                isWorkOrder: true,
-            },
-            include: {
-                customer: true,
-                vehicle: true,
-            },
-        })
-
-        return services
-    } catch (error) {
-        console.error("Failed to get work orders:", error)
-        return []
-    }
-}
-
-export async function convertToWorkOrder(serviceId: string) {
-    try {
-        // Get the current service
-        const service = await db.service.findById(serviceId, {
-            include: {
-                customer: true,
-                vehicle: true,
-                parts: true,
-            },
-        })
-
-        if (!service) {
-            return {
-                success: false,
-                error: "Service not found",
-            }
-        }
-
-        // Generate a work order ID
-        const workOrderId = generateRandomId("WO")
-
-        // Update the service to be a work order
-        await db.service.update({
-            id: serviceId,
-            data: {
-                isWorkOrder: true,
-                workOrderId: workOrderId,
-                status: "in_progress", // Automatically set to in_progress when converted
-            },
-        })
-
-        revalidatePath("/customer")
-        return {
-            success: true,
-            workOrderId,
-        }
-    } catch (error) {
-        console.error("Failed to convert to work order:", error)
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : "Failed to convert to work order",
-        }
-    }
-}
-
-export async function getServiceDetails(id: string) {
-    try {
-        const service = await db.service.findById(id, {
-            include: {
-                customer: true,
-                vehicle: true,
-                parts: true,
-            },
-        })
-
-        return service
     } catch (error) {
         console.error("Failed to get service details:", error)
         return null
@@ -338,7 +284,10 @@ export async function getCustomerAndVehicleDetails(customerId: string, vehicleId
     try {
         const customer = await db.customer.findById(customerId)
         const vehicle = await db.vehicle.findById(vehicleId)
-
+        console.log("b.customer.", customerId)
+        console.log("b.vehicle.", vehicleId)
+        console.log("b.customer.findById", customer)
+        console.log("b.vehicle.findById", vehicle)
         return { customer, vehicle }
     } catch (error) {
         console.error("Failed to get customer and vehicle details:", error)
@@ -348,18 +297,75 @@ export async function getCustomerAndVehicleDetails(customerId: string, vehicleId
 
 export async function getAvailableParts() {
     try {
-        const parts = await db.part.findMany({
+        return await db.part.findMany({
             where: {
                 stock: {
                     gt: 0,
                 },
             },
         })
-
-        return parts
     } catch (error) {
         console.error("Failed to get available parts:", error)
         return []
+    }
+}
+
+export async function getEstimations() {
+    try {
+        return await db.service.findMany({
+            where: {
+                isWorkOrder: false,
+            },
+            include: {
+                customer: true,
+                vehicle: true,
+            },
+        })
+    } catch (error) {
+        console.error("Failed to get estimations:", error)
+        return []
+    }
+}
+
+export async function getWorkOrders() {
+    try {
+        return await db.service.findMany({
+            where: {
+                isWorkOrder: true,
+            },
+            include: {
+                customer: true,
+                vehicle: true,
+            },
+        })
+    } catch (error) {
+        console.error("Failed to get work orders:", error)
+        return []
+    }
+}
+
+export async function convertToWorkOrder(serviceId: string) {
+    try {
+        const result = await db.service.convertToWorkOrder(serviceId)
+
+        if (!result) {
+            return {
+                success: false,
+                error: "Service not found or already a work order",
+            }
+        }
+
+        revalidatePath("/services")
+        revalidatePath("/services/estimations")
+        revalidatePath("/services/workorders")
+
+        return result
+    } catch (error) {
+        console.error("Failed to convert to work order:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to convert to work order",
+        }
     }
 }
 

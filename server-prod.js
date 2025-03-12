@@ -250,7 +250,7 @@ app.get("/api/car-models/:brandId", async (req, res) => {
 })
 
 // ======== Customer Routes ========
-app.get("/api/customers", authenticateToken, async (req, res) => {
+app.get("/api/servicess", authenticateToken, async (req, res) => {
     try {
         const { search } = req.query
         let query = "SELECT * FROM customers"
@@ -272,7 +272,7 @@ app.get("/api/customers", authenticateToken, async (req, res) => {
     }
 })
 
-app.get("/api/customers/:id", authenticateToken, async (req, res) => {
+app.get("/api/servicess/:id", authenticateToken, async (req, res) => {
     try {
         const { id } = req.params
 
@@ -307,7 +307,7 @@ app.get("/api/customers/:id", authenticateToken, async (req, res) => {
     }
 })
 
-app.post("/api/customers", authenticateToken, async (req, res) => {
+app.post("/api/servicess", authenticateToken, async (req, res) => {
     try {
         const { name, email, phone, address } = req.body
 
@@ -337,7 +337,7 @@ app.post("/api/customers", authenticateToken, async (req, res) => {
     }
 })
 
-app.put("/api/customers/:id", authenticateToken, async (req, res) => {
+app.put("/api/servicess/:id", authenticateToken, async (req, res) => {
     try {
         const { id } = req.params
         const { name, email, phone, address } = req.body

@@ -191,14 +191,14 @@ export default function InventoryManagePage() {
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/">
+                    {/* <Link href="/">
                         <Button variant="outline" size="sm">
                             <Home className="h-4 w-4 mr-2" /> Home
                         </Button>
-                    </Link>
-                    <h1 className="text-3xl font-bold">Inventory Management</h1>
+                    </Link> */}
+                    <h1 className="text-3xl font-bold">Pencarian Suku Cadang</h1>
                 </div>
-                <Clock />
+                {/* <Clock /> */}
             </div>
 
             <Card className="mb-6">
@@ -274,11 +274,11 @@ export default function InventoryManagePage() {
                         <CardTitle>Inventory Items</CardTitle>
                         <CardDescription>{filteredItems.length} items found</CardDescription>
                     </div>
-                    <Link href="/purchase/new">
+                    {/* <Link href="/inventory/purchase/new">
                         <Button>
                             <Plus className="h-4 w-4 mr-2" /> Add New Item
                         </Button>
-                    </Link>
+                    </Link> */}
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -307,12 +307,12 @@ export default function InventoryManagePage() {
                                             <TableCell>{item.retailName}</TableCell>
                                             <TableCell>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {item.compatibilityCars.slice(0, 2).map((car: any, i: number) => (
+                                                    {item.compatibilityCars?.slice(0, 2).map((car: any, i: number) => (
                                                         <Badge key={i} variant="outline">
                                                             {car.brand} {car.model} ({car.year})
                                                         </Badge>
                                                     ))}
-                                                    {item.compatibilityCars.length > 2 && (
+                                                    {item.compatibilityCars?.length > 2 && (
                                                         <Badge variant="outline">+{item.compatibilityCars.length - 2} more</Badge>
                                                     )}
                                                 </div>

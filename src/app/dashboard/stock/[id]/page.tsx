@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Loader2, ArrowLeft, Calendar, Store, Tag, Package, DollarSign } from "lucide-react"
 import { getStockById } from "@/lib/actions"
 import { formatCurrency, formatDate } from "@/lib/utils"
-
-export default function StockDetailPage({ params }: { params: { id: string } }) {
+export default function StockDetailPage() {
+    const params = useParams<{ id: string }>()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(true)
     const [stock, setStock] = useState<any>(null)

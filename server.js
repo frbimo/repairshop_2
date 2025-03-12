@@ -89,7 +89,7 @@ app.get("/api/users", authMiddleware, roleMiddleware(["admin"]), async (req, res
 })
 
 // Customer routes
-app.get("/api/customers", authMiddleware, async (req, res) => {
+app.get("/api/servicess", authMiddleware, async (req, res) => {
     try {
         const customers = await database.customers.getAll()
         res.json(customers)
@@ -99,7 +99,7 @@ app.get("/api/customers", authMiddleware, async (req, res) => {
     }
 })
 
-app.get("/api/customers/:id", authMiddleware, async (req, res) => {
+app.get("/api/servicess/:id", authMiddleware, async (req, res) => {
     try {
         const customer = await database.customers.findById(req.params.id)
         if (!customer) {
@@ -112,7 +112,7 @@ app.get("/api/customers/:id", authMiddleware, async (req, res) => {
     }
 })
 
-app.post("/api/customers", authMiddleware, async (req, res) => {
+app.post("/api/servicess", authMiddleware, async (req, res) => {
     try {
         const newCustomer = await database.customers.create(req.body)
         res.status(201).json(newCustomer)
@@ -122,7 +122,7 @@ app.post("/api/customers", authMiddleware, async (req, res) => {
     }
 })
 
-app.put("/api/customers/:id", authMiddleware, async (req, res) => {
+app.put("/api/servicess/:id", authMiddleware, async (req, res) => {
     try {
         const updatedCustomer = await database.customers.update(req.params.id, req.body)
         if (!updatedCustomer) {
@@ -136,7 +136,7 @@ app.put("/api/customers/:id", authMiddleware, async (req, res) => {
 })
 
 // Vehicle routes
-app.post("/api/customers/:customerId/vehicles", authMiddleware, async (req, res) => {
+app.post("/api/servicess/:customerId/vehicles", authMiddleware, async (req, res) => {
     try {
         const newVehicle = await database.customers.addVehicle(req.params.customerId, req.body)
         if (!newVehicle) {

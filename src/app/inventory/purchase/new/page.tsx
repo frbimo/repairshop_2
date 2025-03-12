@@ -175,7 +175,7 @@ export default function NewPurchaseReceiptPage() {
                 totalAmount
             })
 
-            router.push("/inventory/manage")
+            router.push("/inventory/search")
         } catch (error) {
             console.error("Error creating purchase receipt:", error)
             alert("Failed to create purchase receipt. Please try again.")
@@ -187,7 +187,7 @@ export default function NewPurchaseReceiptPage() {
     return (
         <div className="container py-10">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">New Purchase Receipt</h1>
+                <h1 className="text-3xl font-bold">Daftar Suku Cadang Baru</h1>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -195,13 +195,13 @@ export default function NewPurchaseReceiptPage() {
                     {/* Purchase Receipt Details */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Purchase Receipt Details</CardTitle>
+                            <CardTitle>Receipt Pembelian</CardTitle>
                             <CardDescription>Enter the details of the purchase receipt</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="invoice-number">Invoice Number *</Label>
+                                    <Label htmlFor="invoice-number">No. Invoice*</Label>
                                     <Input
                                         id="invoice-number"
                                         value={invoiceNumber}
@@ -212,7 +212,7 @@ export default function NewPurchaseReceiptPage() {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="vendor-name">Vendor Name *</Label>
+                                    <Label htmlFor="vendor-name">Nama Vendor*</Label>
                                     <Input
                                         id="vendor-name"
                                         value={vendorName}
@@ -223,7 +223,7 @@ export default function NewPurchaseReceiptPage() {
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="purchase-date">Purchase Date *</Label>
+                                    <Label htmlFor="purchase-date">Tgl. Pembelian *</Label>
                                     <Input
                                         id="purchase-date"
                                         type="date"
@@ -250,21 +250,21 @@ export default function NewPurchaseReceiptPage() {
                     {/* Spare Parts Items */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Spare Parts Items</CardTitle>
-                            <CardDescription>Add the spare parts included in this purchase</CardDescription>
+                            <CardTitle>Item Suku Cadang</CardTitle>
+                            <CardDescription>Tambahkan detail suku cadang</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-6">
                                 {items.length === 0 ? (
                                     <div className="text-center py-10 border border-dashed rounded-lg">
                                         <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                                        <h3 className="mt-2 text-sm font-semibold text-muted-foreground">No items added</h3>
+                                        <h3 className="mt-2 text-sm font-semibold text-muted-foreground">Tidak ada item ditambahkan </h3>
                                         <p className="mt-1 text-sm text-muted-foreground">
-                                            Get started by adding a spare part item.
+                                            Mulai menambahkan.
                                         </p>
                                         <div className="mt-6">
                                             <Button type="button" onClick={addItem}>
-                                                <Plus className="h-4 w-4 mr-2" /> Add Item
+                                                <Plus className="h-4 w-4 mr-2" /> Tambah Item
                                             </Button>
                                         </div>
                                     </div>
@@ -299,7 +299,7 @@ export default function NewPurchaseReceiptPage() {
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor={`name-${index}`}>Item Name *</Label>
+                                                        <Label htmlFor={`name-${index}`}>Nama Item*</Label>
                                                         <Input
                                                             id={`name-${index}`}
                                                             value={item.name}
@@ -322,7 +322,7 @@ export default function NewPurchaseReceiptPage() {
                                                     </div>
 
                                                     <div className="grid gap-2">
-                                                        <Label htmlFor={`unit-price-${index}`}>Unit Price *</Label>
+                                                        <Label htmlFor={`unit-price-${index}`}>Harga Unit *</Label>
                                                         <Input
                                                             id={`unit-price-${index}`}
                                                             type="number"
@@ -335,7 +335,7 @@ export default function NewPurchaseReceiptPage() {
                                                     </div>
 
                                                     <div className="grid gap-2 sm:col-span-2">
-                                                        <Label htmlFor={`description-${index}`}>Description</Label>
+                                                        <Label htmlFor={`description-${index}`}>Deskripsi</Label>
                                                         <Textarea
                                                             id={`description-${index}`}
                                                             value={item.description}
@@ -351,7 +351,7 @@ export default function NewPurchaseReceiptPage() {
                                                 {/* Compatible Cars Section */}
                                                 <div>
                                                     <div className="flex justify-between items-center mb-2">
-                                                        <Label className="text-base">Compatible Cars</Label>
+                                                        <Label className="text-base">Kompatibel Kendaraan</Label>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
@@ -365,7 +365,7 @@ export default function NewPurchaseReceiptPage() {
                                                     {/* Compatible Cars List */}
                                                     <div className="flex flex-wrap gap-2 mb-4">
                                                         {item.compatibleCars.length === 0 ? (
-                                                            <p className="text-sm text-muted-foreground">No compatible cars added yet</p>
+                                                            <p className="text-sm text-muted-foreground">Kompatibel kendaraan tidak ditambahkan</p>
                                                         ) : (
                                                             item.compatibleCars.map((car, carIndex) => (
                                                                 <Badge key={car.id} variant="secondary" className="flex items-center gap-1">
@@ -390,7 +390,7 @@ export default function NewPurchaseReceiptPage() {
                                                         <div className="grid gap-4 p-4 border rounded-lg bg-muted/20">
                                                             <div className="grid gap-4 sm:grid-cols-3">
                                                                 <div className="grid gap-2">
-                                                                    <Label htmlFor={`car-brand-${index}`}>Brand</Label>
+                                                                    <Label htmlFor={`car-brand-${index}`}>Merk</Label>
                                                                     <Select value={compatibleBrand} onValueChange={setCompatibleBrand}>
                                                                         <SelectTrigger id={`car-brand-${index}`}>
                                                                             <SelectValue placeholder="Select brand" />
@@ -422,7 +422,7 @@ export default function NewPurchaseReceiptPage() {
                                                                 </div>
 
                                                                 <div className="grid gap-2">
-                                                                    <Label htmlFor={`car-year-${index}`}>Year</Label>
+                                                                    <Label htmlFor={`car-year-${index}`}>Tahun</Label>
                                                                     <Input
                                                                         id={`car-year-${index}`}
                                                                         value={compatibleYear}
@@ -440,7 +440,7 @@ export default function NewPurchaseReceiptPage() {
                                                                 onClick={() => addCompatibleCar(index)}
                                                                 disabled={!compatibleBrand || !compatibleModel || !compatibleYear}
                                                             >
-                                                                <Plus className="h-4 w-4 mr-2" /> Add Compatible Car
+                                                                <Plus className="h-4 w-4 mr-2" /> Tambah Kompatibel kendaraan
                                                             </Button>
                                                         </div>
                                                     )}
@@ -461,7 +461,7 @@ export default function NewPurchaseReceiptPage() {
 
                                 {items.length > 0 && (
                                     <Button type="button" variant="outline" onClick={addItem}>
-                                        <Plus className="h-4 w-4 mr-2" /> Add Another Item
+                                        <Plus className="h-4 w-4 mr-2" /> Tambah Item Lainnya
                                     </Button>
                                 )}
                             </div>
@@ -479,11 +479,11 @@ export default function NewPurchaseReceiptPage() {
                     {/* Submit Buttons */}
                     <div className="flex justify-end gap-4">
                         <Button type="button" variant="outline" onClick={() => router.back()}>
-                            Cancel
+                            Batal
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Purchase Receipt
+                            Simpan Receipt
                         </Button>
                     </div>
                 </div>

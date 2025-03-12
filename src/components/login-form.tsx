@@ -34,7 +34,7 @@ export function LoginForm() {
         try {
             const user = await login(email, password)
             if (user) {
-                router.push("/customer")
+                router.push("/services")
                 router.refresh()
             } else {
                 setError("Invalid email or password")

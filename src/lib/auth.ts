@@ -1,8 +1,7 @@
-// Simple role-based authentication system
-// In a real app, this would be connected to a database and proper authentication
+// Role-based authentication system with separate accounts and roles
 
 // Types
-export type Role = "admin" | "officer"
+export type Role = "admin" | "inventory_manager" | "service_technician" | "receptionist"
 
 export type User = {
     id: string
@@ -10,6 +9,50 @@ export type User = {
     email: string
     role: Role
     createdAt: Date
+}
+
+// Role permissions mapping
+export const rolePermissions = {
+    admin: {
+        canManageUsers: true,
+        canManageRoles: true,
+        canViewAnalytics: true,
+        canManageInventory: true,
+        canCreatePurchase: true,
+        canManageService: true,
+        canViewDashboard: true,
+        canConvertEstimation: true,
+    },
+    inventory_manager: {
+        canManageUsers: false,
+        canManageRoles: false,
+        canViewAnalytics: true,
+        canManageInventory: true,
+        canCreatePurchase: true,
+        canManageService: false,
+        canViewDashboard: true,
+        canConvertEstimation: false,
+    },
+    service_technician: {
+        canManageUsers: false,
+        canManageRoles: false,
+        canViewAnalytics: false,
+        canManageInventory: false,
+        canCreatePurchase: false,
+        canManageService: true,
+        canViewDashboard: true,
+        canConvertEstimation: true,
+    },
+    receptionist: {
+        canManageUsers: false,
+        canManageRoles: false,
+        canViewAnalytics: false,
+        canManageInventory: false,
+        canCreatePurchase: false,
+        canManageService: true,
+        canViewDashboard: false,
+        canConvertEstimation: false,
+    },
 }
 
 // Mock users database
@@ -23,10 +66,24 @@ let users: User[] = [
     },
     {
         id: "user-2",
-        name: "Officer User",
-        email: "officer@example.com",
-        role: "officer",
+        name: "Inventory Manager",
+        email: "inventory@example.com",
+        role: "inventory_manager",
         createdAt: new Date("2023-01-02"),
+    },
+    {
+        id: "user-3",
+        name: "Service Technician",
+        email: "service@example.com",
+        role: "service_technician",
+        createdAt: new Date("2023-01-03"),
+    },
+    {
+        id: "user-4",
+        name: "Receptionist",
+        email: "reception@example.com",
+        role: "receptionist",
+        createdAt: new Date("2023-01-04"),
     },
 ]
 
@@ -62,19 +119,20 @@ export const auth = {
         }
     },
 
-    // Check if user has a specific role
-    hasRole: (role: Role) => {
-        return currentUser?.role === role
-    },
-
-    // Check if user is admin
-    isAdmin: () => {
-        return currentUser?.role === "admin"
+    // Check if user has a specific permission
+    hasPermission: (permission: keyof typeof rolePermissions.admin) => {
+        if (!currentUser) return false
+        return rolePermissions[currentUser.role][permission]
     },
 
     // Get all users
     getUsers: () => {
         return [...users]
+    },
+
+    // Get all available roles
+    getRoles: (): Role[] => {
+        return ["admin", "inventory_manager", "service_technician", "receptionist"]
     },
 
     // Add user
