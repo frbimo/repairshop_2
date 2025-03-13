@@ -9,12 +9,12 @@ import { PageContainer } from "@/components/page-container"
 import { Car, Wrench, BarChart3, Package2, Users, ArrowRight } from "lucide-react"
 
 // Define the hasPermission function
-const hasPermission = (userPermissions: string[], requiredPermission: string): boolean => {
-  return userPermissions?.includes(requiredPermission);
-}
+// const hasPermission = (userPermissions: string[], requiredPermission: string): boolean => {
+//   return userPermissions?.includes(requiredPermission);
+// }
 
 export default function Home() {
-  const { userPermissions } = useAuth()
+  const { hasPermission } = useAuth()
 
   return (
     <PageContainer>
@@ -28,7 +28,7 @@ export default function Home() {
             </p>
           </div>
           <div className="flex justify-center gap-4 mt-4">
-            {hasPermission(userPermissions, "canManageInventory") && (
+            {hasPermission("canManageInventory") && (
               <Link href="/dashboard">
                 <Button size="lg">
                   View Dashboard <ArrowRight className="ml-2 h-4 w-4" />
@@ -82,14 +82,14 @@ export default function Home() {
                 Track inventory levels, add new purchases, and view detailed reports on your automotive parts.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                {hasPermission(userPermissions, "canCreatePurchase") && (
+                {hasPermission("canCreatePurchase") && (
                   <Link href="/purchase/new" className="flex-1">
                     <Button className="w-full" variant="default">
                       Add New Purchase
                     </Button>
                   </Link>
                 )}
-                {hasPermission(userPermissions, "canViewDashboard") && (
+                {hasPermission("canViewDashboard") && (
                   <Link href="/dashboard" className="flex-1">
                     <Button className="w-full" variant="outline">
                       View Dashboard
@@ -112,7 +112,7 @@ export default function Home() {
               <p className="text-muted-foreground">
                 Access comprehensive analytics on inventory, sales, and service performance.
               </p>
-              {hasPermission(userPermissions, "canViewAnalytics") && (
+              {hasPermission("canViewAnalytics") && (
                 <Link href="/analytics">
                   <Button className="w-full" variant="default">
                     View Analytics

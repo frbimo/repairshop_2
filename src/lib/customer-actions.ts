@@ -161,15 +161,15 @@ export async function saveServiceDetails(customerId: string, vehicleId: string, 
                 vehicleId,
                 description: data.description,
                 serviceTypes: data.serviceTypes,
-                parts: data.parts.map((part: any) => {
-                    const partData = db.part.findById(part.partId)
+                parts: await Promise.all(data.parts.map(async (part: any) => {
+                    const partData = await db.part.findById(part.partId)
                     return {
                         id: part.partId,
-                        name: partData ? partData.name : "Unknown Part",
-                        price: partData ? partData.price : 0,
+                        name: partData ? (await partData).name : "Unknown Part",
+                        price: partData ? (await partData).price : 0,
                         quantity: part.quantity,
                     }
-                }),
+                })),
                 estimatedCompletionDate: new Date(data.estimatedCompletionDate),
                 status: "pending",
                 isWorkOrder: false,
@@ -227,16 +227,17 @@ export async function updateServiceDetails(serviceId: string, data: z.infer<any>
             await db.part.updateStock(part.id, part.quantity)
         }
 
+
         // 2. Update with new parts
-        const updatedParts = data.parts.map((part: any) => {
-            const partData = db.part.findById(part.partId)
+        const updatedParts = await Promise.all(data.parts.map(async (part: any) => {
+            const partData = await db.part.findById(part.partId)
             return {
                 id: part.partId,
                 name: partData ? partData.name : "Unknown Part",
                 price: partData ? partData.price : 0,
                 quantity: part.quantity,
             }
-        })
+        }))
 
         // 3. Update the service with new parts
         await db.service.update({

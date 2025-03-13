@@ -1,7 +1,17 @@
 // Role-based authentication system with separate accounts and roles
 
+import { getRolePermissions } from "./role-definitions"
+
 // Types
-export type Role = "admin" | "inventory_manager" | "service_technician" | "receptionist"
+// export type Role = "admin" | "inventory_manager" | "service_technician" | "receptionist"
+
+export enum Role {
+    Admin = "admin",
+    Officer = "officer",
+    Technician = "service_technician",
+    Manager = "inventory_manager",
+    Receptionist = "receptionist"
+}
 
 export type User = {
     id: string
@@ -61,28 +71,28 @@ let users: User[] = [
         id: "user-1",
         name: "Admin User",
         email: "admin@example.com",
-        role: "admin",
+        role: Role.Admin,
         createdAt: new Date("2023-01-01"),
     },
     {
         id: "user-2",
         name: "Inventory Manager",
         email: "inventory@example.com",
-        role: "inventory_manager",
+        role: Role.Manager,
         createdAt: new Date("2023-01-02"),
     },
     {
         id: "user-3",
         name: "Service Technician",
         email: "service@example.com",
-        role: "service_technician",
+        role: Role.Technician,
         createdAt: new Date("2023-01-03"),
     },
     {
         id: "user-4",
         name: "Receptionist",
         email: "reception@example.com",
-        role: "receptionist",
+        role: Role.Receptionist,
         createdAt: new Date("2023-01-04"),
     },
 ]
@@ -122,7 +132,8 @@ export const auth = {
     // Check if user has a specific permission
     hasPermission: (permission: keyof typeof rolePermissions.admin) => {
         if (!currentUser) return false
-        return rolePermissions[currentUser.role][permission]
+
+        return getRolePermissions(currentUser.role) == permission
     },
 
     // Get all users
@@ -132,7 +143,7 @@ export const auth = {
 
     // Get all available roles
     getRoles: (): Role[] => {
-        return ["admin", "inventory_manager", "service_technician", "receptionist"]
+        return [Role.Admin, Role.Manager, Role.Officer, Role.Receptionist, Role.Technician]
     },
 
     // Add user

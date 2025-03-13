@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/utils"
 import { getQRCodeUrl } from "@/lib/qr-utils"
 import { Printer } from "lucide-react"
-
+import Image from "next/image"
 interface PrintLayoutProps {
     type: "estimation" | "workOrder"
     id: string
@@ -286,7 +286,15 @@ export function PrintLayout({
 
                 <div className="flex justify-center mt-8">
                     <div className="text-center">
-                        <img src={getQRCodeUrl(id) || "/placeholder.svg"} alt={`QR Code for ${id}`} className="mx-auto mb-2" />
+                        <Image
+                            src={getQRCodeUrl(id) || "/placeholder.svg"}
+                            alt={`QR Code for ${id}`}
+                            className="mx-auto mb-2"
+                            width={100}
+                            height={100}
+                            placeholder="blur"
+                            priority={false}
+                        />
                         <p className="text-sm text-muted-foreground">{id}</p>
                     </div>
                 </div>

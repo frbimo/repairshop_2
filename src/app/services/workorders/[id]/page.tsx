@@ -64,6 +64,22 @@ const editFormSchema = z.object({
 
 type EditFormValues = z.infer<typeof editFormSchema>
 
+
+interface SuccessResult {
+    success: boolean;
+    workOrderId: string;
+}
+
+interface ErrorResult {
+    success: boolean;
+    error: string;
+}
+type ConversionResult = SuccessResult | ErrorResult;
+
+function isSuccessResult(result: ConversionResult): result is SuccessResult {
+    return result.success && 'workOrderId' in result;
+}
+
 export default function ServiceDetailPage() {
     const params = useParams<{ id: string }>()
     const router = useRouter()
@@ -218,7 +234,7 @@ export default function ServiceDetailPage() {
         try {
             const result = await convertToWorkOrder(service.id)
 
-            if (result.success) {
+            if (isSuccessResult(result)) {
                 // Refresh service data
                 const updatedService = await getServiceDetails(params.id)
                 setService(updatedService)

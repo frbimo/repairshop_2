@@ -7,7 +7,7 @@ import type { Customer, Vehicle, Service, ServicePart, Part } from "./customer-a
 // In a real app, you would use a real database like Prisma with PostgreSQL
 
 import type { PurchaseReceipt, SparePartItem, CompatibilityCar } from "./actions"
-
+import { generateId } from "./actions"
 // Car brands and models database
 export const carDatabase = {
     brands: [
@@ -65,7 +65,7 @@ export const carDatabase = {
 }
 
 // Generate some fake data for spare part items
-const generateFakeSparePartItems = (): SparePartItem[] => {
+const generateFakeSparePartItems = async (): Promise<SparePartItem[]> => {
     const items: SparePartItem[] = []
 
     // Generate 50 fake spare part items
@@ -99,7 +99,7 @@ const generateFakeSparePartItems = (): SparePartItem[] => {
 
         const compatibilityCars: CompatibilityCar[] = []
         const numCars = Math.floor(Math.random() * 3) + 1 // 1-3 cars
-
+        const id = await generateId();
         for (let j = 0; j < numCars; j++) {
             const brandIndex = Math.floor(Math.random() * carDatabase.brands.length)
             const brand = carDatabase.brands[brandIndex]
@@ -108,6 +108,7 @@ const generateFakeSparePartItems = (): SparePartItem[] => {
             const year = 2015 + Math.floor(Math.random() * 9) // 2015-2023
 
             compatibilityCars.push({
+                id,
                 brand,
                 model: models[modelIndex],
                 year,
@@ -122,6 +123,7 @@ const generateFakeSparePartItems = (): SparePartItem[] => {
             stock,
             compatibilityCars,
             createdAt: new Date(),
+            description: ""
         })
     }
 
@@ -134,31 +136,31 @@ const generateFakePurchaseReceipts = (sparePartItems: SparePartItem[]): Purchase
 
     // Generate 20 fake purchase receipts
     for (let i = 1; i <= 20; i++) {
-        const createdAt = new Date()
-        createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 365)) // Random date within the last year
+        const purchaseDate = new Date()
+        purchaseDate.setDate(purchaseDate.getDate() - Math.floor(Math.random() * 365)) // Random date within the last year
 
         // Randomly select 1-5 spare part items for this receipt
         const numItems = Math.floor(Math.random() * 5) + 1
-        const itemIds: string[] = []
+        const items: SparePartItem[] = []
 
         for (let j = 0; j < numItems; j++) {
             const randomIndex = Math.floor(Math.random() * sparePartItems.length)
-            const itemId = sparePartItems[randomIndex].id
-
+            const item = sparePartItems[randomIndex]
             // Avoid duplicates
-            if (!itemIds.includes(itemId)) {
-                itemIds.push(itemId)
+            if (!items.includes(item)) {
+                items.push(item)
             }
         }
 
         receipts.push({
             id: `rec-${i}`,
-            invoice: `INV-${1000 + i}`,
-            retailName: ["AutoZone", "O'Reilly Auto Parts", "Advance Auto Parts", "NAPA Auto Parts"][
+            invoiceNumber: `INV-${1000 + i}`,
+            vendorName: ["AutoZone", "O'Reilly Auto Parts", "Advance Auto Parts", "NAPA Auto Parts"][
                 Math.floor(Math.random() * 4)
             ],
-            itemIds,
-            createdAt,
+            items,
+            purchaseDate,
+            totalCost: 0
         })
     }
 
@@ -506,8 +508,17 @@ const generateMockParts = (): Part[] => {
 
 // Fake database with in-memory storage
 class Database {
-    private sparePartItems: SparePartItem[] = generateFakeSparePartItems()
-    private purchaseReceipts: PurchaseReceipt[] = generateFakePurchaseReceipts(this.sparePartItems)
+    private sparePartItems: SparePartItem[] = []
+    private purchaseReceipts: PurchaseReceipt[] = []
+
+    constructor() {
+        this.initializeDatabase()
+    }
+
+    private async initializeDatabase() {
+        this.sparePartItems = await generateFakeSparePartItems()
+        this.purchaseReceipts = generateFakePurchaseReceipts(this.sparePartItems)
+    }
 
     // Add these new properties
     private customers: Customer[] = generateMockCustomers()
@@ -595,20 +606,20 @@ class Database {
 
             // Filter by date if specified
             if (where?.createdAt?.gte) {
-                results = results.filter((receipt) => receipt.createdAt >= where.createdAt.gte!)
+                results = results.filter((receipt) => where.createdAt && receipt.purchaseDate >= where.createdAt.gte!)
             }
 
             if (where?.createdAt?.lt) {
-                results = results.filter((receipt) => receipt.createdAt < where.createdAt.lt!)
+                results = results.filter((receipt) => where.createdAt && receipt.purchaseDate < where.createdAt.lt!)
             }
 
             // Sort if specified
             if (orderBy?.createdAt) {
                 results.sort((a, b) => {
                     if (orderBy.createdAt === "asc") {
-                        return a.createdAt.getTime() - b.createdAt.getTime()
+                        return a.purchaseDate.getTime() - b.purchaseDate.getTime()
                     } else {
-                        return b.createdAt.getTime() - a.createdAt.getTime()
+                        return b.purchaseDate.getTime() - a.purchaseDate.getTime()
                     }
                 })
             }
@@ -617,7 +628,7 @@ class Database {
             if (include?.items) {
                 return Promise.all(
                     results.map(async (receipt) => {
-                        const items = await this.sparePartItem.findByIds(receipt.itemIds)
+                        const items = await this.sparePartItem.findByIds(receipt.items.map(item => item.id))
                         return {
                             ...receipt,
                             items,
@@ -634,7 +645,7 @@ class Database {
             if (!receipt) return null
 
             if (include?.items) {
-                const items = await this.sparePartItem.findByIds(receipt.itemIds)
+                const items = await this.sparePartItem.findByIds(receipt.items.map(item => item.id))
                 return {
                     ...receipt,
                     items,
@@ -904,7 +915,7 @@ class Database {
             let results = [...this.parts]
 
             if (where?.stock?.gt !== undefined) {
-                results = results.filter((part) => part.stock > where.stock.gt)
+                results = results.filter((part) => where?.stock?.gt !== undefined && part.stock > where.stock.gt)
             }
 
             return results

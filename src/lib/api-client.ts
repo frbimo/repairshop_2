@@ -47,7 +47,7 @@ export const clearAuth = (): void => {
 }
 
 // Check if we're using the mock database
-const useMockDb = () => {
+const isUseMockDb = () => {
     return typeof window !== "undefined"
         ? window.process?.env?.NEXT_PUBLIC_USE_MOCK_DB === "true"
         : process.env.USE_MOCK_DB === "true"
@@ -60,22 +60,37 @@ export const apiRequest = async <T>(
 )
     : Promise<ApiResponse<T>> => {
     try {
+
         const token = getToken()
-        const headers: HeadersInit = {
-            "Content-Type": "application/json",
-            ...options.headers,
+        const requestHeaders: HeadersInit = new Headers();
+        if (options.headers) {
+            Object.entries(options.headers).forEach(([key, value]) => {
+                requestHeaders.set(key, value as string);
+            });
+        }
+        requestHeaders.set('Content-Type', 'application/json');
+        if (token) {
+            requestHeaders.set('Authorization', `Bearer ${token}`);
         }
 
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`
-        }
+        // const headers: HeadersInit = {
+        //     "Content-Type": "application/json",
+        //     ...options.headers,
+        // }
+        // headers.set()
+        // if (token) {
+        //     headers["Authorization"] = `Bearer ${token}`
+        // }
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
-            headers,
+            headers: requestHeaders,
         })
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (!response.ok) {
             // Handle unauthorized errors (expired token, etc.)
@@ -110,11 +125,11 @@ export const apiRequest = async <T>(
 export async function get<T>(endpoint: string, params?: Record<string, string>): Promise<ApiResponse<T>> {
     // If using mock DB, return success with empty data
     // The actual mock data will be provided by the controller
-    if (useMockDb()) {
+    if (isUseMockDb()) {
         return {
             success: true,
             data: {} as T,
-            message: "Mock data",
+            // message: "Mock data",
         }
     }
 

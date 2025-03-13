@@ -13,31 +13,103 @@ export async function getAnalyticsData(timeRange: string, startDate?: string, en
         // This would normally filter by date range, but we're using mock data
 
         // Create a formatted response with all the data needed by the frontend
-        return {
+        interface RevenueTrend {
+            labels: string[];
+            data: number[];
+        }
+
+        interface ServiceDistribution {
+            labels: string[];
+            data: number[];
+        }
+
+        interface SalesByCategory {
+            labels: string[];
+            data: number[];
+        }
+
+        interface StockLevelTrend {
+            labels: string[];
+            data: number[];
+        }
+
+        interface InventoryByCategory {
+            labels: string[];
+            data: number[];
+        }
+
+        interface ServiceTrend {
+            labels: string[];
+            data: number[];
+        }
+
+        interface ServiceStatusDistribution {
+            labels: string[];
+            data: number[];
+        }
+
+        interface TopServiceType {
+            name: string;
+            count: number;
+            averageDuration: number;
+            averageRevenue: number;
+        }
+
+        interface RecentTransaction {
+            date: Date;
+            type: string;
+            description: string;
+            status: string;
+            amount: number;
+        }
+
+        interface AnalyticsData {
+            overview: any;
+            revenueTrend: RevenueTrend;
+            serviceDistribution: ServiceDistribution;
+            salesByCategory: SalesByCategory;
+            stockLevelTrend: StockLevelTrend;
+            inventoryByCategory: InventoryByCategory;
+            serviceTrend: ServiceTrend;
+            serviceStatusDistribution: ServiceStatusDistribution;
+            sales: any;
+            inventory: any;
+            services: {
+                totalServices: number;
+                averageValue: number;
+                completionRate: number;
+            };
+            topServiceTypes: TopServiceType[];
+            lowStockItems: any;
+            topSellingItems: any;
+            recentTransactions: RecentTransaction[];
+        }
+
+        const response: AnalyticsData = {
             overview: analyticsData.overview,
             revenueTrend: {
-                labels: analyticsData.sales.revenueByMonth.map((item) => item.month),
-                data: analyticsData.sales.revenueByMonth.map((item) => item.revenue),
+                labels: analyticsData.sales.revenueByMonth.map((item: { month: string; }) => item.month),
+                data: analyticsData.sales.revenueByMonth.map((item: { revenue: number; }) => item.revenue),
             },
             serviceDistribution: {
-                labels: analyticsData.service.servicesByType.map((item) => item.type),
-                data: analyticsData.service.servicesByType.map((item) => item.count),
+                labels: analyticsData.service.servicesByType.map((item: { type: string; }) => item.type),
+                data: analyticsData.service.servicesByType.map((item: { count: number; }) => item.count),
             },
             salesByCategory: {
-                labels: analyticsData.sales.revenueByCategory.map((item) => item.category),
-                data: analyticsData.sales.revenueByCategory.map((item) => item.revenue),
+                labels: analyticsData.sales.revenueByCategory.map((item: { category: string; }) => item.category),
+                data: analyticsData.sales.revenueByCategory.map((item: { revenue: number; }) => item.revenue),
             },
             stockLevelTrend: {
                 labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
                 data: [120, 125, 130, 128, 135, 140, 142, 138, 135, 130, 125, 120],
             },
             inventoryByCategory: {
-                labels: analyticsData.inventory.stockByCategory.map((item) => item.category),
-                data: analyticsData.inventory.stockByCategory.map((item) => item.count),
+                labels: analyticsData.inventory.stockByCategory.map((item: { category: string; }) => item.category),
+                data: analyticsData.inventory.stockByCategory.map((item: { count: number; }) => item.count),
             },
             serviceTrend: {
-                labels: analyticsData.service.servicesByMonth.map((item) => item.month),
-                data: analyticsData.service.servicesByMonth.map((item) => item.count),
+                labels: analyticsData.service.servicesByMonth.map((item: { month: string; }) => item.month),
+                data: analyticsData.service.servicesByMonth.map((item: { count: number; }) => item.count),
             },
             serviceStatusDistribution: {
                 labels: ["Pending", "In Progress", "Completed"],
@@ -104,6 +176,8 @@ export async function getAnalyticsData(timeRange: string, startDate?: string, en
                 },
             ],
         }
+
+        return response
     } catch (error) {
         console.error("Error in getAnalyticsData:", error)
         return null

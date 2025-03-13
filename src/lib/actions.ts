@@ -6,6 +6,7 @@ import type { z } from "zod"
 
 // Type definitions
 export type CompatibilityCar = {
+    id: string
     brand: string
     model: string
     year: number
@@ -19,22 +20,42 @@ export type SparePartItem = {
     stock: number
     compatibilityCars: CompatibilityCar[]
     createdAt: Date
+    description: string
 }
 
 export type PurchaseReceipt = {
     id: string
-    invoice: string
-    retailName: string
-    itemIds: string[]
-    createdAt: Date
+    invoiceNumber: string
+    vendorName: string
+    // itemIds: string[]
+    purchaseDate: Date
+    items: SparePartItem[]
+    totalCost: number
 }
 
+export const generateId = async (): Promise<string> => {
+    return Math.random().toString(36).substring(2, 9);
+};
+
+// Generate a unique ID
+// export const generateId: () => string = () => Math.random().toString(36).substring(2, 9);
+// export interface GenerateReceiptId {
+//     (prefix?: string): string;
+// }
+
+export const generateReceiptId = async (prefix = ""): Promise<string> => {
+    return prefix + Math.random().toString(36).substring(2, 9);
+};
+
+// export const generateReceiptId: GenerateReceiptId = (prefix = "") => prefix + Math.random().toString(36).substring(2, 9);
+
+
 // Server actions
-export async function createPurchaseReceipt(data: z.infer<any>) {
+export async function createPurchaseReceipt(data: PurchaseReceipt) {
     try {
         // Create spare part items first
         const createdItemIds: string[] = []
-
+        const createItems: SparePartItem[] = []
         for (const item of data.items) {
             // Validate each car compatibility entry for this item
             for (const car of item.compatibilityCars) {
@@ -63,18 +84,22 @@ export async function createPurchaseReceipt(data: z.infer<any>) {
                     price: item.price,
                     stock: item.stock,
                     compatibilityCars: item.compatibilityCars,
+                    description: item.description
                 },
             })
-
-            createdItemIds.push(newItem.id)
+            createItems.push(newItem)
+            // createdItemIds.push(newItem.id)
         }
 
         // Create the purchase receipt with references to the items
         await db.purchaseReceipt.create({
             data: {
-                invoice: data.invoice,
-                retailName: data.retailName,
-                itemIds: createdItemIds,
+                invoiceNumber: data.invoiceNumber,
+                vendorName: data.vendorName,
+                // itemIds: createdItemIds,
+                items: createItems,
+                purchaseDate: data.purchaseDate,
+                totalCost: data.totalCost
             },
         })
 
@@ -330,7 +355,7 @@ export async function getInventoryTrends() {
         const monthlyData: Record<string, { month: string; count: number; value: number }> = {}
 
         for (const receipt of receipts) {
-            const date = receipt.createdAt
+            const date = receipt.purchaseDate
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
             const monthLabel = date.toLocaleString("default", { month: "short", year: "numeric" })
 

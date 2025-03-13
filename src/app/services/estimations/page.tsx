@@ -24,6 +24,22 @@ import { PageContainer } from "@/components/page-container"
 import { PageHeader } from "@/components/page-header"
 import { formatDate } from "@/lib/utils"
 
+
+interface SuccessResult {
+    success: boolean;
+    workOrderId: string;
+}
+
+interface ErrorResult {
+    success: boolean;
+    error: string;
+}
+type ConversionResult = SuccessResult | ErrorResult;
+
+function isSuccessResult(result: ConversionResult): result is SuccessResult {
+    return result.success && 'workOrderId' in result;
+}
+
 export default function EstimationsPage() {
     const router = useRouter()
     const { hasPermission } = useAuth()
@@ -91,8 +107,7 @@ export default function EstimationsPage() {
         setIsConverting(true)
         try {
             const result = await convertToWorkOrder(selectedService.id)
-
-            if (result.success) {
+            if (isSuccessResult(result)) {
                 // Update the local state
                 setEstimations(estimations.filter((est) => est.id !== selectedService.id))
                 setFilteredEstimations(filteredEstimations.filter((est) => est.id !== selectedService.id))

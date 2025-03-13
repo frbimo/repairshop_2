@@ -11,25 +11,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Plus, Trash2, Car, Package, Tag, X } from 'lucide-react'
-import { createPurchaseReceipt } from "@/lib/inventory-actions"
+import { createPurchaseReceipt, SparePartItem, generateId } from "@/lib/actions"
 import { formatCurrency } from "@/lib/utils"
 
-// Types
-interface SparePartItem {
-    id: string
-    sku: string
-    name: string
-    quantity: number
-    unitPrice: number
-    description: string
-    compatibleCars: CompatibleCar[]
-}
+// // Types
+// interface SparePartItem {
+//     id: string
+//     sku: string
+//     name: string
+//     quantity: number
+//     unitPrice: number
+//     description: string
+//     compatibility: CompatibleCar[]
+// }
 
-interface CompatibleCar {
+interface Car {
     id: string
     brand: string
     model: string
-    year: string
+    year: number
 }
 
 // Mock car brands and models for the demo
@@ -51,9 +51,6 @@ const carModels: Record<string, string[]> = {
     "Hyundai": ["Elantra", "Sonata", "Tucson", "Santa Fe", "Palisade"]
 };
 
-// Generate a unique ID
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
 export default function NewPurchaseReceiptPage() {
     const router = useRouter()
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -61,8 +58,9 @@ export default function NewPurchaseReceiptPage() {
     // Purchase receipt form state
     const [invoiceNumber, setInvoiceNumber] = useState("")
     const [vendorName, setVendorName] = useState("")
-    const [purchaseDate, setPurchaseDate] = useState("")
+    const [purchaseDate, setPurchaseDate] = useState(new Date())
     const [notes, setNotes] = useState("")
+    const [totalCost, setTotalCost] = useState(0)
 
     // Spare parts items state
     const [items, setItems] = useState<SparePartItem[]>([])
@@ -71,21 +69,22 @@ export default function NewPurchaseReceiptPage() {
     const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null)
     const [compatibleBrand, setCompatibleBrand] = useState("")
     const [compatibleModel, setCompatibleModel] = useState("")
-    const [compatibleYear, setCompatibleYear] = useState("")
+    const [compatibleYear, setCompatibleYear] = useState(0)
 
     // Calculate total amount
-    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
+    const totalAmount = items.reduce((sum, item) => sum + (item.stock * item.price), 0)
 
     // Add a new spare part item
     const addItem = () => {
         const newItem: SparePartItem = {
-            id: generateId(),
+            id: "",
             sku: "",
             name: "",
-            quantity: 1,
-            unitPrice: 0,
+            stock: 1,
+            price: 0,
             description: "",
-            compatibleCars: []
+            compatibilityCars: [],
+            createdAt: new Date()
         }
 
         setItems([...items, newItem])
@@ -106,11 +105,11 @@ export default function NewPurchaseReceiptPage() {
     }
 
     // Add compatible car to an item
-    const addCompatibleCar = (index: number) => {
+    const addCompatibleCar = async (index: number) => {
         if (!compatibleBrand || !compatibleModel || !compatibleYear) return
-
-        const newCar: CompatibleCar = {
-            id: generateId(),
+        const myid = await generateId();
+        const newCar: Car = {
+            id: myid,
             brand: compatibleBrand,
             model: compatibleModel,
             year: compatibleYear
@@ -119,7 +118,7 @@ export default function NewPurchaseReceiptPage() {
         const updatedItems = [...items]
         updatedItems[index] = {
             ...updatedItems[index],
-            compatibleCars: [...updatedItems[index].compatibleCars, newCar]
+            compatibilityCars: [...updatedItems[index].compatibilityCars, newCar]
         }
 
         setItems(updatedItems)
@@ -127,15 +126,15 @@ export default function NewPurchaseReceiptPage() {
         // Reset form
         setCompatibleBrand("")
         setCompatibleModel("")
-        setCompatibleYear("")
+        setCompatibleYear(0)
     }
 
     // Remove compatible car from an item
     const removeCompatibleCar = (itemIndex: number, carIndex: number) => {
         const updatedItems = [...items]
-        const updatedCars = [...updatedItems[itemIndex].compatibleCars]
+        const updatedCars = [...updatedItems[itemIndex].compatibilityCars]
         updatedCars.splice(carIndex, 1)
-        updatedItems[itemIndex] = { ...updatedItems[itemIndex], compatibleCars: updatedCars }
+        updatedItems[itemIndex] = { ...updatedItems[itemIndex], compatibilityCars: updatedCars }
         setItems(updatedItems)
     }
 
@@ -150,7 +149,7 @@ export default function NewPurchaseReceiptPage() {
 
         // Validate items
         for (const item of items) {
-            if (!item.sku || !item.name || item.quantity <= 0 || item.unitPrice <= 0) {
+            if (!item.sku || !item.name || item.stock <= 0 || item.price <= 0) {
                 alert("Please fill in all item details correctly")
                 return
             }
@@ -159,20 +158,16 @@ export default function NewPurchaseReceiptPage() {
         setIsSubmitting(true)
 
         try {
+            const id = await generateId();
             await createPurchaseReceipt({
+                id,
+                // itemIds,
                 invoiceNumber,
                 vendorName,
                 purchaseDate,
-                notes,
-                items: items.map(item => ({
-                    sku: item.sku,
-                    name: item.name,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    description: item.description,
-                    compatibleCars: item.compatibleCars
-                })),
-                totalAmount
+                // notes,
+                items,
+                totalCost,
             })
 
             router.push("/inventory/search")
@@ -227,8 +222,8 @@ export default function NewPurchaseReceiptPage() {
                                     <Input
                                         id="purchase-date"
                                         type="date"
-                                        value={purchaseDate}
-                                        onChange={(e) => setPurchaseDate(e.target.value)}
+                                        value={purchaseDate.toISOString().split('T')[0]}
+                                        onChange={(e) => setPurchaseDate(e.target.valueAsDate || new Date())}
                                         required
                                     />
                                 </div>
@@ -315,8 +310,8 @@ export default function NewPurchaseReceiptPage() {
                                                             id={`quantity-${index}`}
                                                             type="number"
                                                             min="1"
-                                                            value={item.quantity}
-                                                            onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 0)}
+                                                            value={item.stock}
+                                                            onChange={(e) => updateItem(index, "stock", parseInt(e.target.value) || 0)}
                                                             required
                                                         />
                                                     </div>
@@ -328,8 +323,8 @@ export default function NewPurchaseReceiptPage() {
                                                             type="number"
                                                             min="0"
                                                             step="0.01"
-                                                            value={item.unitPrice}
-                                                            onChange={(e) => updateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
+                                                            value={item.price}
+                                                            onChange={(e) => updateItem(index, "price", parseFloat(e.target.value) || 0)}
                                                             required
                                                         />
                                                     </div>
@@ -364,10 +359,10 @@ export default function NewPurchaseReceiptPage() {
 
                                                     {/* Compatible Cars List */}
                                                     <div className="flex flex-wrap gap-2 mb-4">
-                                                        {item.compatibleCars.length === 0 ? (
+                                                        {item.compatibilityCars.length === 0 ? (
                                                             <p className="text-sm text-muted-foreground">Kompatibel kendaraan tidak ditambahkan</p>
                                                         ) : (
-                                                            item.compatibleCars.map((car, carIndex) => (
+                                                            item.compatibilityCars.map((car, carIndex) => (
                                                                 <Badge key={car.id} variant="secondary" className="flex items-center gap-1">
                                                                     <Car className="h-3 w-3" />
                                                                     {car.brand} {car.model} ({car.year})
@@ -426,7 +421,7 @@ export default function NewPurchaseReceiptPage() {
                                                                     <Input
                                                                         id={`car-year-${index}`}
                                                                         value={compatibleYear}
-                                                                        onChange={(e) => setCompatibleYear(e.target.value)}
+                                                                        onChange={(e) => setCompatibleYear(e.target.valueAsNumber)}
                                                                         placeholder="2023"
                                                                     />
                                                                 </div>
@@ -452,7 +447,7 @@ export default function NewPurchaseReceiptPage() {
                                                     <span className="text-sm font-medium">SKU: {item.sku || "Not set"}</span>
                                                 </div>
                                                 <div className="text-sm font-medium">
-                                                    Subtotal: {formatCurrency(item.quantity * item.unitPrice)}
+                                                    Subtotal: {formatCurrency(item.stock * item.price)}
                                                 </div>
                                             </CardFooter>
                                         </Card>
